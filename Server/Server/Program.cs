@@ -105,6 +105,10 @@ namespace XnaGameServer
         static float newPlayerX = 10;
         static float newPlayerY = 350;
 
+        static DateTime lastTime = DateTime.Now;
+        static DateTime currentTime = DateTime.Now;
+        static TimeSpan gameTime = TimeSpan.MinValue;
+
         static void Main(string[] args)
         {
             levelLoader = new LevelLoader();
@@ -126,12 +130,20 @@ namespace XnaGameServer
 
             _writeClientUpdate.Start();
 
+            // GAME LOOP =====================================================
+
             // run until escape is pressed
             while (!Console.KeyAvailable || Console.ReadKey().Key != ConsoleKey.Escape)
             {
+                // calc game time
+
+                lastTime = currentTime;
+                currentTime = DateTime.Now;
+                gameTime = lastTime - currentTime;
+
                 foreach (Enemy enemy in enemies)
                 {
-                    enemy.Update();
+                    enemy.Update(gameTime);
                 }
 
                 NetIncomingMessage msg;

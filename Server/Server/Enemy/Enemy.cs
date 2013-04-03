@@ -49,13 +49,13 @@ namespace XnaGameServer
             get { return this.IsAlive; }
         }
 
-        public void FindPlayerYPosition()
+        public void FindPlayerYPosition(TimeSpan gameTime)
         {
             float distanceY = TargetPlayer.y - this.Position.Y;
             if (distanceY < 0)
-                this.Position.Y -= Speed; // * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                this.Position.Y -= Speed * (float)gameTime.TotalSeconds;
             else if (distanceY > 2)
-                this.Position.Y += Speed; // * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                this.Position.Y += Speed * (float)gameTime.TotalSeconds;
             else
             {
                 if (CurrentState == CharacterState.IDLE)
@@ -93,18 +93,18 @@ namespace XnaGameServer
             }
         }
 
-        public virtual void Update()
+        public virtual void Update(TimeSpan gameTime)
         {
             if (this.CurrentState != CharacterState.DEAD && TargetPlayer != null)
             {
-                FindPlayerYPosition();
+                FindPlayerYPosition(gameTime);
 
                 float distanceX = TargetPlayer.x - this.Position.X;
 
                 switch (CurrentState)
                 {
                     case CharacterState.ATTACK:
-                        //AttackPlayer(gameTime);
+                        //AttackPlayer(GameTime);
                         GetEnemyMovingToPlayer(distanceX);
                         break;
 
@@ -115,7 +115,7 @@ namespace XnaGameServer
                     case CharacterState.MOVELEFT:
                         this.LastState = CurrentState;
 
-                        this.Position.X -= Speed; // * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                        this.Position.X -= Speed * (float)gameTime.TotalSeconds;
 
                         if (distanceX - distancePlayerEnemyAttack >= 0 && distanceX < 70)
                         {
@@ -125,7 +125,7 @@ namespace XnaGameServer
 
                     case CharacterState.MOVERIGHT:
                         this.LastState = CurrentState;
-                        this.Position.X += Speed; // * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                        this.Position.X += Speed * (float)gameTime.TotalSeconds;
 
                         if (distanceX >= 0 && distanceX < 70)
                         {
