@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace XnaGameServer
 {
 
-    enum PacketTypes
+    public enum PacketTypes
     {
         CREATEPLAYER,
         GETNUMBEROFPLAYERS,
@@ -35,7 +35,7 @@ namespace XnaGameServer
         GETENEMYTARGETPLAYER
     };
 
-    enum CharacterState
+    public enum CharacterState
     {
         IDLE,
         JUMP,
@@ -51,7 +51,7 @@ namespace XnaGameServer
         ATTACK
     };
 
-    class MultiplayerPlayers
+    public class MultiplayerPlayer
     {
         public long id;
         public float x,y;
@@ -63,7 +63,7 @@ namespace XnaGameServer
         public bool isDead;
         public bool isHost;
 
-        public MultiplayerPlayers(long id)
+        public MultiplayerPlayer(long id)
         {
             this.id = id;
             this.health = 500;
@@ -74,20 +74,22 @@ namespace XnaGameServer
         }
     };
 
+    /*
     class Enemy
     {
         public char id;
         public float x,y;
         public long targetPlayer;
-        public CharacterState state;
-        public CharacterState lastState;
-        public int health;
-        public bool isDead;
+        public CharacterState state = CharacterState.IDLE;
+        public CharacterState lastState = CharacterState.MOVELEFT;
+        public int health = 300;
+        public bool isDead = false;
     };
+    */
 
     class Program
     {
-        static List<MultiplayerPlayers> multiplayerPlayers = new List<MultiplayerPlayers>();
+        static List<MultiplayerPlayer> multiplayerPlayers = new List<MultiplayerPlayer>();
         static List<Enemy> enemies = new List<Enemy>();
 
         static Random rand = new Random();
@@ -106,7 +108,7 @@ namespace XnaGameServer
         static void Main(string[] args)
         {
             levelLoader = new LevelLoader();
-            levelLoader.LoadLevel();
+            LoadLevel();
 
             sem = new Semaphore(1, 1);
             NetPeerConfiguration config = new NetPeerConfiguration("robotcontra");
@@ -127,6 +129,11 @@ namespace XnaGameServer
             // run until escape is pressed
             while (!Console.KeyAvailable || Console.ReadKey().Key != ConsoleKey.Escape)
             {
+                foreach (Enemy enemy in enemies)
+                {
+                    enemy.Update();
+                }
+
                 NetIncomingMessage msg;
                 while ((msg = server.ReadMessage()) != null)
                 {
@@ -157,7 +164,7 @@ namespace XnaGameServer
                                 //
                                 Console.WriteLine(NetUtility.ToHexString(msg.SenderConnection.RemoteUniqueIdentifier) + " connected!");
                                 
-                                multiplayerPlayers.Add(new MultiplayerPlayers(msg.SenderConnection.RemoteUniqueIdentifier));
+                                multiplayerPlayers.Add(new MultiplayerPlayer(msg.SenderConnection.RemoteUniqueIdentifier));
 
                                 // randomize his position and store in connection tag
                                 multiplayerPlayers[multiplayerPlayers.Count - 1].x = newPlayerX; // multiplayerPlayers[multiplayerPlayers.Count - 2].x + 70;
@@ -244,7 +251,7 @@ namespace XnaGameServer
                                     float xPosition = msg.ReadFloat();
                                     float yPosition = msg.ReadFloat();
 
-                                    foreach (MultiplayerPlayers players in multiplayerPlayers)
+                                    foreach (MultiplayerPlayer players in multiplayerPlayers)
                                     {
                                         if (players.id == msg.SenderConnection.RemoteUniqueIdentifier)
                                         {
@@ -270,7 +277,7 @@ namespace XnaGameServer
                                     float updateVelX = msg.ReadFloat();
                                     float updateVelY = msg.ReadFloat();
 
-                                    foreach (MultiplayerPlayers players in multiplayerPlayers)
+                                    foreach (MultiplayerPlayer players in multiplayerPlayers)
                                     {
                                         if (players.id == msg.SenderConnection.RemoteUniqueIdentifier)
                                         {
@@ -312,7 +319,7 @@ namespace XnaGameServer
                                     break;
 
                                     case (byte)PacketTypes.SENDPLAYERDEAD:
-                                    foreach (MultiplayerPlayers players in multiplayerPlayers)
+                                    foreach (MultiplayerPlayer players in multiplayerPlayers)
                                     {
                                         if (players.id == msg.SenderConnection.RemoteUniqueIdentifier)
                                         {
@@ -349,13 +356,13 @@ namespace XnaGameServer
                                     for (int i = 0; i < enemiesInLevel; i++)
                                     {
                                         Enemy tempEnemy = new Enemy();
-                                        tempEnemy.isDead = false;
+                                        tempEnemy.IsDead = false;
 
-                                        tempEnemy.health = msg.ReadInt16();
-                                        tempEnemy.state = (CharacterState)msg.ReadByte();
-                                        tempEnemy.lastState = (CharacterState)msg.ReadByte();
-                                        tempEnemy.x = msg.ReadFloat();
-                                        tempEnemy.y = msg.ReadFloat();
+                                        tempEnemy.Health = msg.ReadInt16();
+                                        tempEnemy.CurrentState = (CharacterState)msg.ReadByte();
+                                        tempEnemy.LastState = (CharacterState)msg.ReadByte();
+                                        tempEnemy.Position.X = msg.ReadFloat();
+                                        tempEnemy.Position.Y = msg.ReadFloat();
 
                                         enemies.Add(tempEnemy);
 
@@ -389,19 +396,19 @@ namespace XnaGameServer
                                 case (byte)PacketTypes.UPDATEENEMYPOSITION:
                                     for (int i = 0; i < enemies.Count; i++)
                                     {
-                                        enemies[i].health = msg.ReadInt32();
-                                        enemies[i].isDead = msg.ReadBoolean();
-                                        enemies[i].state = (CharacterState)msg.ReadByte();
-                                        enemies[i].lastState = (CharacterState)msg.ReadByte();
-                                        enemies[i].x = msg.ReadFloat();
-                                        enemies[i].y = msg.ReadFloat();
+                                        enemies[i].Health = msg.ReadInt32();
+                                        enemies[i].IsDead = msg.ReadBoolean();
+                                        enemies[i].CurrentState = (CharacterState)msg.ReadByte();
+                                        enemies[i].LastState = (CharacterState)msg.ReadByte();
+                                        enemies[i].Position.X = msg.ReadFloat();
+                                        enemies[i].Position.Y = msg.ReadFloat();
                                     }
                                     break;
 
                                 case (byte)PacketTypes.DELETEENEMY:
                                     int enemyDead = msg.ReadInt16();
                                     sem.WaitOne();
-                                    enemies[enemyDead].isDead = true;
+                                    enemies[enemyDead].IsDead = true;
                                     sem.Release();
                                     break;
 
@@ -413,12 +420,12 @@ namespace XnaGameServer
                                     for (int i = 0; i < enemies.Count; i++)
                                     {
                                        
-                                        msgOut.Write((byte)enemies[i].state);
-                                        msgOut.Write((byte)enemies[i].lastState);
-                                        //msgOut.Write((short)enemies[i].health);
-                                        //msgOut.Write((bool)enemies[i].isDead);
-                                        //msgOut.Write((float)enemies[i].x);
-                                        //msgOut.Write((float)enemies[i].y);
+                                        msgOut.Write((byte)enemies[i].CurrentState);
+                                        msgOut.Write((byte)enemies[i].LastState);
+                                        msgOut.Write((short)enemies[i].Health);
+                                        msgOut.Write((bool)enemies[i].IsDead);
+                                        msgOut.Write((float)enemies[i].Position.X);
+                                        msgOut.Write((float)enemies[i].Position.Y);
                                     }
 
                                     server.SendMessage(msgOut, msg.SenderConnection, NetDeliveryMethod.ReliableOrdered);
@@ -434,12 +441,12 @@ namespace XnaGameServer
 
                                     for (int i = 0; i < enemies.Count; i++)
                                     {
-                                        msgOut.Write((byte)enemies[i].state);
-                                        msgOut.Write((byte)enemies[i].lastState);
-                                        msgOut.Write((short)enemies[i].health);
-                                        msgOut.Write((bool)enemies[i].isDead);
-                                        msgOut.Write((float)enemies[i].x);
-                                        msgOut.Write((float)enemies[i].y);
+                                        msgOut.Write((byte)enemies[i].CurrentState);
+                                        msgOut.Write((byte)enemies[i].LastState);
+                                        msgOut.Write((short)enemies[i].Health);
+                                        msgOut.Write((bool)enemies[i].IsDead);
+                                        msgOut.Write((float)enemies[i].Position.X);
+                                        msgOut.Write((float)enemies[i].Position.Y);
 
                                     }
                                     server.SendMessage(msgOut, msg.SenderConnection, NetDeliveryMethod.ReliableOrdered);
@@ -514,14 +521,14 @@ namespace XnaGameServer
                     }
 
                     if (multiplayerPlayers[index].isDead == false)
-                        enemies[i].targetPlayer = multiplayerPlayers[index].id;
+                        enemies[i].TargetPlayer = multiplayerPlayers[index];
                 }
             }
         }
 
         static void SendToAllPlayerEnemyTarget()
         {
-            if (enemies.Count > 0)
+            if (enemies.Count > 0 && server != null)
             {
                 for (int i = 0; i < server.Connections.Count; i++)
                 {
@@ -535,7 +542,7 @@ namespace XnaGameServer
                         om.Write((byte)PacketTypes.SENDENEMYTARGETPLAYER);
                         for (int k = 0; k < enemies.Count; k++)
                         {
-                            om.Write((long)enemies[k].targetPlayer);
+                            om.Write((long)enemies[k].TargetPlayer.id);
                         }
                         server.SendMessage(om, player, NetDeliveryMethod.ReliableOrdered);
                     }
@@ -563,7 +570,33 @@ namespace XnaGameServer
             ////
             while (true)
             {
-                
+                if (enemies.Count > 0)
+                {
+                    for (int i = 0; i < server.Connections.Count; i++)
+                    {
+                        NetConnection player = server.Connections[i] as NetConnection;
+                        // ... send information about every other player (actually including self)
+                        for (int j = 0; j < multiplayerPlayers.Count; j++)
+                        {
+                            NetOutgoingMessage msgOut = server.CreateMessage();
+
+                            msgOut.Write((byte)PacketTypes.SENDENEMYPOSITIONS);
+
+                            for (int k = 0; k < enemies.Count; k++)
+                            {
+                                msgOut.Write((byte)enemies[i].CurrentState);
+                                msgOut.Write((byte)enemies[i].LastState);
+                                msgOut.Write((short)enemies[i].Health);
+                                msgOut.Write((bool)enemies[i].IsDead);
+                                msgOut.Write((float)enemies[i].Position.X);
+                                msgOut.Write((float)enemies[i].Position.Y);
+                            }
+
+                            server.SendMessage(msgOut, player, NetDeliveryMethod.ReliableOrdered);
+                        }
+                    }
+                }
+                Thread.Sleep(0);
             }
         }
 

@@ -2,115 +2,109 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework;
-using GameStateManagementSample;
 
-namespace GameStateManagement.SideScrollGame
+namespace XnaGameServer
 {
     enum KindEnemy
     {
         Normal
     };
 
-    #region BASE CLASS ENEMY
-    class Enemy : Character
+    public class Enemy
     {
-        public Character targetPlayer;
-        public char id;
-        public Health healthBar;
-        private bool isAlive; // should enemy show and move
-        private float distancePlayerEnemyAttack = 40.0f;
-        
+        public MultiplayerPlayer TargetPlayer { get; set; }
+        public char Id { get; set; }
+        public bool IsAlive { get; set; } // should enemy show and move
+        public float distancePlayerEnemyAttack = 40.0f;
+        public float Speed { get; set; }
+        public CharacterState CurrentState { get; set; }
+        public CharacterState LastState { get; set; }
+        public bool IsDead { get; set; }
+        public Vector2 Position { get; set; }
+        public int Health { get; set; }
 
-        public Enemy(): base(){}
-
-        public Enemy(Texture2D texture, Vector2 Position, Vector2 Size, float speed)
-            : base(texture, Position, Size)
+        public Enemy() : this(new Vector2(0, 350), 3)
         {
-            this.speed = speed;
-            this.currentState = CharacterState.MOVELEFT;
-
-            healthBar = new Health(this);
-            this.AddChild(healthBar);
-            this.isAlive = false;
-            this.setDead(false);
         }
 
-        public void SetTargetPlayer(Character targetPerson)
+        public Enemy(Vector2 position, float speed)
         {
-            this.targetPlayer = targetPerson;
+            this.Speed = speed;
+            this.CurrentState = CharacterState.MOVELEFT;
+            this.Position = position;
+            this.Health = 300;
+
+            this.IsAlive = false;
+            this.IsDead = false;
         }
 
-        
-
-        public void setAlive(bool alive)
+        public void SetTargetPlayer(MultiplayerPlayer targetPerson)
         {
-            this.isAlive = true;
+            this.TargetPlayer = targetPerson;
         }
 
         public bool Alive
         {
-            get { return this.isAlive; }
+            set { this.IsAlive = value; }
+            get { return this.IsAlive; }
         }
 
-        public void FindPlayerYPosition(GameTime gameTime)
+        public void FindPlayerYPosition()
         {
-            float distanceY = targetPlayer.position.Y - this.position.Y;
+            float distanceY = TargetPlayer.y - this.Position.Y;
             if (distanceY < 0)
-                this.position.Y -= speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                this.Position.Y -= Speed; // * (float)gameTime.ElapsedGameTime.TotalSeconds;
             else if (distanceY > 2)
-                this.position.Y += speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                this.Position.Y += Speed; // * (float)gameTime.ElapsedGameTime.TotalSeconds;
             else
             {
-                if (currentState == CharacterState.IDLE)
-                    currentState = CharacterState.ATTACK;
+                if (CurrentState == CharacterState.IDLE)
+                    CurrentState = CharacterState.ATTACK;
             }
 
-            if (targetPlayer.position.Y + targetPlayer.SourceRect.Height> GameplayScreen.main.ScreenManager.GraphicsDevice.Viewport.Height)
+            /*
+            if (targetPlayer.y + targetPlayer.SourceRect.Height> GameplayScreen.main.ScreenManager.GraphicsDevice.Viewport.Height)
             {
-                targetPlayer.position.Y = GameplayScreen.main.ScreenManager.GraphicsDevice.Viewport.Height - targetPlayer.SourceRect.Height;
+                targetPlayer.y = GameplayScreen.main.ScreenManager.GraphicsDevice.Viewport.Height - targetPlayer.SourceRect.Height;
             }
+            */
           
         }
 
-        public void AttackPlayer(GameTime gameTime)
+        /*
+        public void AttackPlayer()
         {
-            if (targetPlayer.currentState != CharacterState.JUMP)
-                targetPlayer.getHit(this.attackDamage);
+            if (targetPlayer.state != CharacterState.JUMP)
+                targetPlayer.(this.attackDamage);
             else
                 currentState = CharacterState.IDLE;
         }
+        */
 
         public void GetEnemyMovingToPlayer(float distanceX)
         {
-            if (distanceX + targetPlayer.SourceRect.Width < 0)
+            if (distanceX < 0)
             {
-                currentState = CharacterState.MOVELEFT;
+                CurrentState = CharacterState.MOVELEFT;
             }
-            if (distanceX > targetPlayer.SourceRect.Width)
+            if (distanceX > 0)
             {
-                currentState = CharacterState.MOVERIGHT;
+                CurrentState = CharacterState.MOVERIGHT;
             }
         }
 
-        public override void Draw(SpriteBatch spriteBatch)
+        public virtual void Update()
         {
-            base.Draw(spriteBatch);
-        }
-
-        public virtual void  Update(GameTime gameTime, Level level)
-        {
-            if (this.currentState != CharacterState.DEAD && targetPlayer != null)
+            if (this.CurrentState != CharacterState.DEAD && TargetPlayer != null)
             {
-                FindPlayerYPosition(gameTime);
+                FindPlayerYPosition();
 
-                float distanceX = targetPlayer.position.X - this.position.X;
+                float distanceX = TargetPlayer.x - this.Position.X;
 
-                switch (currentState)
+                switch (CurrentState)
                 {
                     case CharacterState.ATTACK:
-                        AttackPlayer(gameTime);
+                        //AttackPlayer(gameTime);
                         GetEnemyMovingToPlayer(distanceX);
                         break;
 
@@ -119,67 +113,27 @@ namespace GameStateManagement.SideScrollGame
                         break;
 
                     case CharacterState.MOVELEFT:
-                        this.lastState = currentState;
+                        this.LastState = CurrentState;
 
-                        this.position.X -= speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                        this.Position.X -= Speed; // * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-                        if (distanceX + targetPlayer.SourceRect.Width - distancePlayerEnemyAttack >= 0 && distanceX < targetPlayer.SourceRect.Width)
+                        if (distanceX - distancePlayerEnemyAttack >= 0 && distanceX < 70)
                         {
-                            currentState = CharacterState.IDLE;
+                            CurrentState = CharacterState.IDLE;
                         }
                         break;
 
                     case CharacterState.MOVERIGHT:
-                        this.lastState = currentState;
-                        this.position.X += speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                        this.LastState = CurrentState;
+                        this.Position.X += Speed; // * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-                        if (distanceX >= 0 && distanceX < targetPlayer.SourceRect.Width)
+                        if (distanceX >= 0 && distanceX < 70)
                         {
-                            currentState = CharacterState.IDLE;
+                            CurrentState = CharacterState.IDLE;
                         }
                         break;
                 }
             }
-
-            
-            base.Update(gameTime, level);
-        }
-
-        public void GetEnemyUpdate(GameTime gameTime, Level level)
-        {
-            base.Update(gameTime, level);
-        }
-
-    }
-    #endregion
-
-    class EnemyNormal : Enemy
-    {
-        public EnemyNormal()
-        {
-            this.id = 'N';
-            this.texture = GameplayScreen.main.content.Load<Texture2D>("Character/Enemy/Normal");
-            this.sourceRect = new Rectangle(0,0,70, 130);
-            this.setDead(false);
-        }
-
-       public EnemyNormal(Vector2 pos)
-           :base(GameplayScreen.main.content.Load<Texture2D>("Character/Enemy/Normal"),pos, new Vector2(70, 130), 60.0f)
-        {
-            this.id = 'N';
-            this.setAttackDamage(3.0f);
-            this.setMaximumHealth(150); // default maximum health is 500
-            this.setDead(false);
-        }
-
-        public override void Draw(SpriteBatch spriteBatch)
-        {
-            base.Draw(spriteBatch);
-        }
-
-        public override void Update(GameTime gameTime, Level level)
-        {
-            base.Update(gameTime, level);
         }
     }
 }

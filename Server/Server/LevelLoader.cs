@@ -63,7 +63,7 @@ namespace XnaGameServer
                 if (reader.NodeType == XmlNodeType.EndElement &&
                     reader.Name.Equals("kind", StringComparison.OrdinalIgnoreCase))
                 {
-                    mEnemies.Add(enemy.id, enemy);
+                    mEnemies.Add(enemy.Id, enemy);
                     break;
                 }
 
@@ -75,7 +75,7 @@ namespace XnaGameServer
                     {
                         case "id":
                             {
-                                enemy.id = reader.ReadElementContentAsString().ToCharArray()[0];
+                                enemy.Id = reader.ReadElementContentAsString().ToCharArray()[0];
                                 break;
                             }
                         case "name":
@@ -85,7 +85,7 @@ namespace XnaGameServer
                                 //{
                                 //    enemy = new EnemyNormal();
                                 //}
-                                enemy = new Enemy();
+                                //enemy = new Enemy();
                                 break;
                             }
                     }
@@ -198,14 +198,15 @@ namespace XnaGameServer
                             if (mEnemies.ContainsKey(aRow[aCounter]) == true)
                             {
                                 // add to the level..base on its id..
-                                if (mEnemies[aRow[aCounter]].id == 'N')
+                                if (mEnemies[aRow[aCounter]].Id == 'N')
                                 {
                                     //if (aPositionX > gameWidth)
                                     //    aPositionX = gameWidth - mEnemies[aRow[aCounter]].SourceRect.Width - 20;
 
                                     Enemy enemy = new Enemy();
-                                    enemy.x = aPosition.X;
-                                    enemy.y = 0; // rand.Next(360 - 120, GameplayScreen.main.ScreenManager.GraphicsDevice.Viewport.Height - 130))));                                                
+                                    enemy.Position.X = aPosition.X;
+                                    enemy.Position.Y = rand.Next(360 - 120, 480 - 130);                                                
+                                    enemiesLevel.Add(enemy);
                                 }
                                 aPosition.X += 50; // mEnemies[aRow[aCounter]].SourceRect.Width;
                             }

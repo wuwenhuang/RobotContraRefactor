@@ -50,7 +50,7 @@ namespace GameStateManagement.SideScrollGame
 
         public Player player;
         public float tolerance = 0.5f;
-        public bool isHost;
+        //public bool isHost;
         public Dictionary<long, Player> otherPlayers = new Dictionary<long, Player>();
 
         public bool gameOver = false;
@@ -100,7 +100,6 @@ namespace GameStateManagement.SideScrollGame
 
             if (_isNetwork == false)
             {
-                isHost = true;
                 if (color == PlayerColor.BLUE)
                 {
                     player = new Player(gameplay.content.Load<Texture2D>("Character/player"), new Vector2(10, 350));
@@ -256,20 +255,22 @@ namespace GameStateManagement.SideScrollGame
                         allPlayersDead = false;
                         _goToNextLevel = false;
                     }
+                    if (gameOver == false)
+                        this.Reset(currentLevel, level[currentLevel]);
 
                     //single player reset level
-                    if (gameOver == false)
-                    {
-                        if (this._isNetwork && this.isHost)
-                        {
-                            NetOutgoingMessage outMsg = client.CreateMessage();
+                    //if (gameOver == false)
+                    //{
+                    //    if (this._isNetwork && this.isHost)
+                    //    {
+                    //        NetOutgoingMessage outMsg = client.CreateMessage();
 
-                            outMsg.Write((byte)PacketTypes.SETNEWLEVEL);
-                            outMsg.Write((short)currentLevel);
-                            client.SendMessage(outMsg, NetDeliveryMethod.ReliableOrdered);
-                        }
-                        //this.Reset(currentLevel, level[currentLevel]);
-                    }
+                    //        outMsg.Write((byte)PacketTypes.SETNEWLEVEL);
+                    //        outMsg.Write((short)currentLevel);
+                    //        client.SendMessage(outMsg, NetDeliveryMethod.ReliableOrdered);
+                    //    }
+                    //    //this.Reset(currentLevel, level[currentLevel]);
+                    //}
 
                 }
             }
@@ -327,22 +328,21 @@ namespace GameStateManagement.SideScrollGame
         {
             currentLevel = -1;
 
-            if (player != null)
-                _level = new Level();
+            _level = new Level();
+            this.currentLevel = 1;
+            
+
             _camera = new Camera2D();
 
             _camera.setSize(gameplay.ScreenManager.GraphicsDevice.Viewport.Width,
                 gameplay.ScreenManager.GraphicsDevice.Viewport.Height);
 
-            NetOutgoingMessage msg = client.CreateMessage();
-
-            msg.Write((byte)PacketTypes.GETNUMBEROFPLAYERS);
-
-            client.SendMessage(msg, NetDeliveryMethod.ReliableOrdered);
+            
 
             while (currentLevel < 0)
             {
             }
+            this.Reset(currentLevel, level[currentLevel]);
 
         }
 
@@ -396,10 +396,10 @@ namespace GameStateManagement.SideScrollGame
 
                                     break;
 
-                                case (byte)PacketTypes.CHANGEHOST:
-                                    this.isHost = msg.ReadBoolean();
+                                //case (byte)PacketTypes.CHANGEHOST:
+                                //    this.isHost = msg.ReadBoolean();
 
-                                    break;
+                                //    break;
 
                                 case (byte)PacketTypes.SENDUPDATEVELOCITY:
                                     long updateVelocityWho = msg.ReadInt64();
@@ -470,33 +470,34 @@ namespace GameStateManagement.SideScrollGame
 
                                     break;
 
-                                case (byte)PacketTypes.GETNUMBEROFPLAYERS:
+                                //case (byte)PacketTypes.GETNUMBEROFPLAYERS:
 
-                                    int numberOfPlayers = msg.ReadInt16();
+                                //    int numberOfPlayers = msg.ReadInt16();
 
-                                    if (numberOfPlayers <= 1)
-                                    {
-                                        currentLevel = 1;
-                                        _camera.setPosition(Vector2.Zero);
+                                //    if (numberOfPlayers <= 1)
+                                //    {
+                                //        currentLevel = 1;
+                                //        _camera.setPosition(Vector2.Zero);
 
-                                        isHost = true;
+                                //        isHost = true;
 
-                                        this.Reset(currentLevel, this.level[currentLevel]);
+                                //        this.Reset(currentLevel, this.level[currentLevel]);
 
-                                    }
+                                //    }
 
-                                    else
-                                    {
-                                        _camera.setPosition(new Vector2(player.position.X + player.SourceRect.Width - _camera.rect.Width / 2, 0));
+                                //    else
+                                //    {
+                                //        _camera.setPosition(new Vector2(player.position.X + player.SourceRect.Width - _camera.rect.Width / 2, 0));
 
-                                        isHost = false;
+                                //        isHost = false;
 
-                                        NetOutgoingMessage msgOut = client.CreateMessage();
-                                        msgOut.Write((byte)PacketTypes.GETSERVERLEVEL);
-                                        SideScrollGame.main.client.SendMessage(msgOut, NetDeliveryMethod.ReliableOrdered);
-                                    }
-                                    break;
+                                //        NetOutgoingMessage msgOut = client.CreateMessage();
+                                //        msgOut.Write((byte)PacketTypes.GETSERVERLEVEL);
+                                //        SideScrollGame.main.client.SendMessage(msgOut, NetDeliveryMethod.ReliableOrdered);
+                                //    }
+                                //    break;
 
+                                /*
                                 case (byte)PacketTypes.GETLEVEL:
                                     int level = msg.ReadInt16();
                                     currentLevel = level;
@@ -521,18 +522,22 @@ namespace GameStateManagement.SideScrollGame
 
                                     client.SendMessage(outMsg, NetDeliveryMethod.ReliableOrdered);
                                     break;
+                                 */
 
                                 case (byte)PacketTypes.SENDENEMYPOSITIONS:
-
-                                    for (int i = 0; i < _level.enemiesLevel.Count; i++)
+                                    if (_level != null)
                                     {
-                                        _level.enemiesLevel[i].currentState = (CharacterState)msg.ReadByte();
-                                        _level.enemiesLevel[i].lastState = (CharacterState)msg.ReadByte();
-                                        //_level.enemiesLevel[i].health = msg.ReadInt16();
-                                        //_level.enemiesLevel[i].setDead(msg.ReadBoolean());
-                                        //_level.enemiesLevel[i].position.X = msg.ReadFloat();
-                                        //_level.enemiesLevel[i].position.Y = msg.ReadFloat();
-                                        
+                                        for (int i = 0; i < _level.enemiesLevel.Count; i++)
+                                        {
+                                            _level.enemiesLevel[i].currentState = (CharacterState)msg.ReadByte();
+                                            _level.enemiesLevel[i].lastState = (CharacterState)msg.ReadByte();
+                                            _level.enemiesLevel[i].health = msg.ReadInt16();
+                                            _level.enemiesLevel[i].setDead(msg.ReadBoolean());
+                                            _level.enemiesLevel[i].position.X = msg.ReadFloat();
+                                            float serverY = msg.ReadFloat();
+                                            _level.enemiesLevel[i].position.Y = serverY - 130;
+
+                                        }
                                     }
 
                                     break;

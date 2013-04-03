@@ -5,7 +5,7 @@ using System.Text;
 
 namespace XnaGameServer
 {
-    class Vector2
+    public class Vector2
     {
         public float X;
         public float Y;
