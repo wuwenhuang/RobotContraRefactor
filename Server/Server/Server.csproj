@@ -37,8 +37,9 @@
     <Reference Include="GameStateManagement">
       <HintPath>..\..\GSMSample_4_0_Mango\GameStateManagementSample\GameStateManagementSample\bin\x86\Debug\GameStateManagement.dll</HintPath>
     </Reference>
-    <Reference Include="Lidgren.Network">
-      <HintPath>..\..\..\..\TDDOWNLOAD\lidgren-network-gen3-2012-12-18\Lidgren-network-gen3\Lidgren.Network\bin\Debug\Lidgren.Network.dll</HintPath>
+    <Reference Include="Lidgren.Network, Version=2012.1.7.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\Lidgren.Network.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
