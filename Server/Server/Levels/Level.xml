@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<game>
+  <tiles>
+    <texture>
+      <id>1</id>
+      <picture>
+        <name>Building1</name>
+      </picture>
+      <properties>
+        <walkable>false</walkable>
+      </properties>
+    </texture>
+
+    <texture>
+      <id>2</id>
+      <picture>
+        <name>Building2</name>
+      </picture>
+      <properties>
+        <walkable>false</walkable>
+      </properties>
+    </texture>
+
+    <texture>
+      <id>S</id>
+      <picture>
+        <name>sky</name>
+      </picture>
+      <properties>
+        <walkable>false</walkable>
+      </properties>
+    </texture>
+
+    <texture>
+      <id>R</id>
+      <picture>
+        <name>road</name>
+      </picture>
+      <properties>
+        <walkable>true</walkable>
+      </properties>
+    </texture>
+  </tiles>
+
+  <enemy>
+    
+    <kind>
+      <id>N</id>
+      <name>Normal</name>
+    </kind>
+    
+  </enemy>
+
+    <level>
+      
+      <name>1</name>
+      <tile>
+        <startX>0</startX>
+        <startY>0</startY>
+      </tile>
+      <layout>
+        <row>SSS</row>
+        <row>211E</row>
+        <row>   NN</row>
+        <row>RRR</row>
+      </layout>
+
+      <name>2</name>
+      <tile>
+        <startX>0</startX>
+        <startY>0</startY>
+      </tile>
+      <layout>
+        <row>SSSSSSSSSS</row>
+        <row>1221221212E</row>
+        <row>         NN</row>
+        <row>  N  N</row>
+        <row>RRRRRRRRRR</row>
+      </layout>
+      
+    </level>
+  
+  </game>

@@ -76,13 +76,13 @@ namespace XnaGameServer
 
     class Enemy
     {
+        public char id;
         public float x,y;
         public long targetPlayer;
         public CharacterState state;
         public CharacterState lastState;
         public int health;
         public bool isDead;
-
     };
 
     class Program
@@ -99,9 +99,15 @@ namespace XnaGameServer
         static bool deleteEnemy = false;
 
         static int level;
+        static LevelLoader levelLoader;
+        static float newPlayerX = 10;
+        static float newPlayerY = 350;
 
         static void Main(string[] args)
         {
+            levelLoader = new LevelLoader();
+            levelLoader.LoadLevel();
+
             sem = new Semaphore(1, 1);
             NetPeerConfiguration config = new NetPeerConfiguration("robotcontra");
             config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
@@ -154,16 +160,8 @@ namespace XnaGameServer
                                 multiplayerPlayers.Add(new MultiplayerPlayers(msg.SenderConnection.RemoteUniqueIdentifier));
 
                                 // randomize his position and store in connection tag
-                                if (multiplayerPlayers.Count <= 1)
-                                {
-                                    multiplayerPlayers[0].x = 10;
-                                    multiplayerPlayers[0].y = 350;
-                                }
-                                else
-                                {
-                                    multiplayerPlayers[multiplayerPlayers.Count-1].x = multiplayerPlayers[multiplayerPlayers.Count - 2].x + 70;
-                                    multiplayerPlayers[multiplayerPlayers.Count-1].y = multiplayerPlayers[multiplayerPlayers.Count - 2].y;
-                                }
+                                multiplayerPlayers[multiplayerPlayers.Count - 1].x = newPlayerX; // multiplayerPlayers[multiplayerPlayers.Count - 2].x + 70;
+                                multiplayerPlayers[multiplayerPlayers.Count - 1].y = newPlayerY; // multiplayerPlayers[multiplayerPlayers.Count - 2].y;
 
                                 for (int i = 0; i < server.Connections.Count; i++)
                                 {
@@ -255,6 +253,8 @@ namespace XnaGameServer
                                             players.health = health;
                                             players.x = xPosition;
                                             players.y = yPosition;
+                                            newPlayerX = xPosition + 70;
+                                            newPlayerY = yPosition;
                                             break;
                                         }
                                     }
@@ -565,6 +565,35 @@ namespace XnaGameServer
             {
                 
             }
+        }
+
+        static void LoadLevel()
+        {
+            enemies.Clear();
+            levelLoader.CurrentLevel = 1;
+            levelLoader.LoadLevel();
+
+            //int enemiesInLevel = msg.ReadInt16();
+            //level = msg.ReadInt16();
+
+            for (int i = 0; i < levelLoader.enemiesLevel.Count; i++)
+            {
+                /*
+                Enemy tempEnemy = new Enemy();
+                tempEnemy.isDead = false;
+
+                tempEnemy.health = msg.ReadInt16();
+                tempEnemy.state = (CharacterState)msg.ReadByte();
+                tempEnemy.lastState = (CharacterState)msg.ReadByte();
+                tempEnemy.x = msg.ReadFloat();
+                tempEnemy.y = msg.ReadFloat();
+                */
+                enemies.Add(levelLoader.enemiesLevel[i]);
+
+            }
+            SetEnemyTarget();
+
+            SendToAllPlayerEnemyTarget();
         }
     }
 }
