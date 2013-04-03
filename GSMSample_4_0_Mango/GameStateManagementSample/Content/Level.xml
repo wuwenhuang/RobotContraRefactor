@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<game>
+	<tiles>	   
+		<texture>
+			<id>B</id>
+			<picture>
+				<name>Building1</name>
+			</picture>
+			<properties>
+				<walkable>false</walkable>
+			</properties>
+		</texture>
+
+    <texture>
+      <id>S</id>
+      <picture>
+        <name>sky</name>
+      </picture>
+      <properties>
+        <walkable>false</walkable>
+      </properties>
+    </texture>
+
+    <texture>
+      <id>R</id>
+      <picture>
+        <name>road</name>
+      </picture>
+      <properties>
+        <walkable>true</walkable>
+      </properties>
+    </texture>
+	
+	<level>
+    <name>Level 1</name>
+    <tile>
+      <startX>0</startX>
+      <startY>0</startY>
+    </tile>
+		<layout>
+      <row>S        </row>
+      <row>BBBBBBBB</row>
+      <row>BBBBBBBB</row>
+      <row>RRRRRRRR</row>
+    </layout>
+  </level> 
+</game>

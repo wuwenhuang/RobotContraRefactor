@@ -1,0 +1,9 @@
+Game window:
+800 480
+
+Background picture
+200 120
+
+character
+60 130
+
